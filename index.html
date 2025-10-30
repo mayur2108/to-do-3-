@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project To-Do List</title>
+    
+    <style>
+        /* --- Global & Typography --- */
+        :root {
+            --color-bg: #f4f7f6;
+            --color-surface: #ffffff;
+            --color-border: #e0e0e0;
+            --color-text: #333;
+            --color-text-light: #888;
+            --color-primary: #007bff;
+            --color-success: #28a745;
+            --color-highlight-bg: #fffde7; /* Light yellow */
+            --color-highlight-border: #fbc02d; /* Amber */
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --border-radius: 8px;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            margin: 0;
+            padding: 24px;
+        }
+
+        /* --- Main Layout --- */
+        #app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 32px;
+            color: var(--color-text);
+        }
+
+        #project-board {
+            display: grid;
+            /* Creates responsive columns: 1 on small screens, up to 3 on large */
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        /* --- Project Column Card --- */
+        .project-column {
+            background-color: var(--color-surface);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            overflow: hidden; /* Ensures padding contains children */
+        }
+
+        .project-column h2 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            padding: 16px 20px;
+            margin: 0;
+            border-bottom: 1px solid var(--color-border);
+            background-color: #fcfcfc; /* Slightly off-white header */
+        }
+
+        .task-list {
+            padding: 20px;
+            min-height: 150px;
+        }
+
+        /* --- Task Card Item --- */
+        .task-card {
+            display: flex;
+            align-items: center;
+            background-color: #fdfdfd;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 14px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.07);
+        }
+
+        .task-card:last-child {
+            margin-bottom: 0;
+        }
+
+        /* --- Task Status (Custom Checkbox) --- */
+        .task-status {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #b0b0b0;
+            border-radius: 50%;
+            margin-right: 14px;
+            flex-shrink: 0; /* Prevents shrinking */
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .task-text {
+            line-height: 1.4;
+            flex-grow: 1; /* Takes up remaining space */
+            word-break: break-word;
+        }
+        
+        /* --- Completed State --- */
+        .task-card.completed .task-status {
+            background-color: var(--color-success);
+            border-color: var(--color-success);
+        }
+        
+        /* Checkmark for completed tasks */
+        .task-card.completed .task-status::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 6px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .task-card.completed .task-text {
+            text-decoration: line-through;
+            color: var(--color-text-light);
+        }
+
+        /* --- REQUIRED: Highlighted "FINAL OUTPUT" Task --- */
+        .task-card.highlight-task {
+            background-color: var(--color-highlight-bg);
+            border-color: var(--color-highlight-border);
+            font-weight: 700;
+        }
+
+        .task-card.highlight-task .task-status {
+            border-color: #a1887f;
+        }
+        
+        .task-card.highlight-task.completed {
+            background-color: #f1f8e9; /* Light green when done */
+            border-color: var(--color-success);
+        }
+
+        /* --- Loading State --- */
+        .loading-placeholder {
+            font-style: italic;
+            color: var(--color-text-light);
+            padding: 10px 0;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <header>
+            <h1>Project To-Do List</h1>
+        </header>
+
+        <main id="project-board">
+            
+            <section class="project-column">
+                <h2>Dead End</h2>
+                <div class="task-list" id="project-dead-end">
+                    <div class="loading-placeholder">Loading tasks...</div>
+                </div>
+            </section>
+
+            <section class="project-column">
+                <h2>Secret Project</h2>
+                <div class="task-list" id="project-secret-project">
+                    <div class="loading-placeholder">Loading tasks...</div>
+                </div>
+            </section>
+
+            <section class="project-column">
+                <h2>Others</h2>
+                <div class="task-list" id="project-others">
+                    <div class="loading-placeholder">Loading tasks...</div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            /**
+             * The URL for the API endpoint.
+             * All task loading (GET) and updates (POST) will be sent here.
+             */
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaC_8oNpQYicexa4k7w10mLEMb_bC7kwNHNc1StLq11RDFJ4oZiV8TRu3OeMg5nHOT0Q/exec';
+
+            // Get references to the DOM elements for each project list
+            const deadEndList = document.getElementById('project-dead-end');
+            const secretProjectList = document.getElementById('project-secret-project');
+            const othersList = document.getElementById('project-others');
+
+            /**
+             * MOCK DATA
+             * This data simulates a successful response from SCRIPT_URL.
+             * In a real application, this array would be removed and the
+             * 'fetchTasks' function would use a real 'fetch' call.
+             */
+            const mockTasks = [
+                { id: 't1', text: 'Outline plot points', project: 'Dead End', status: 'completed' },
+                { id: 't2', text: 'Scout desert locations', project: 'Dead End', status: 'pending' },
+                { id: 't3', text: 'Draft screenplay v1', project: 'Dead End', status: 'pending' },
+                { id: 't4', text: 'Research quantum mechanics', project: 'Secret Project', status: 'completed' },
+                { id: 't5', text: 'Build prototype device', project: 'Secret Project', status: 'pending' },
+                { id: 't6', text: 'FINAL OUTPUT', project: 'Secret Project', status: 'pending' },
+                { id: 't7', text: 'Buy groceries', project: 'Others', status: 'completed' },
+                { id: 't8', text: 'Call dentist', project: 'Others', status: 'pending' }
+            ];
+
+            /**
+             * Fetches tasks from the server and renders them.
+             */
+            async function fetchTasks() {
+                console.log(`Fetching tasks from ${SCRIPT_URL}...`);
+                
+                // Clear loading placeholders
+                deadEndList.innerHTML = '';
+                secretProjectList.innerHTML = '';
+                othersList.innerHTML = '';
+
+                try {
+                    // --- REAL FETCH (commented out for demo) ---
+                    // const response = await fetch(SCRIPT_URL);
+                    // if (!response.ok) {
+                    //     throw new Error(`HTTP error! status: ${response.status}`);
+                    // }
+                    // const tasks = await response.json();
+                    
+                    // --- MOCK FETCH (for demonstration) ---
+                    // Simulate a network delay
+                    await new Promise(resolve => setTimeout(resolve, 750));
+                    const tasks = mockTasks; 
+                    // --- End of Mock Fetch ---
+
+                    // Render the tasks to the DOM
+                    renderTasks(tasks);
+
+                } catch (error) {
+                    console.error('Error fetching tasks:', error);
+                    deadEndList.innerHTML = '<div class="loading-placeholder">Error loading tasks.</div>';
+                    // You could add error messages to other lists too
+                }
+            }
+
+            /**
+             * Renders a list of task objects to the correct project columns.
+             * @param {Array<Object>} tasks - An array of task objects
+             */
+            function renderTasks(tasks) {
+                // Ensure lists are empty before rendering
+                deadEndList.innerHTML = '';
+                secretProjectList.innerHTML = '';
+                othersList.innerHTML = '';
+
+                if (tasks.length === 0) {
+                    othersList.innerHTML = '<div class="loading-placeholder">No tasks found.</div>';
+                    return;
+                }
+
+                tasks.forEach(task => {
+                    // 1. Create the main task card element
+                    const taskElement = document.createElement('div');
+                    taskElement.classList.add('task-card');
+                    taskElement.dataset.id = task.id; // Store ID for click events
+
+                    // 2. Add 'completed' class if necessary
+                    if (task.status === 'completed') {
+                        taskElement.classList.add('completed');
+                    }
+
+                    // 3. Add 'highlight-task' class if it's the special task
+                    if (task.text.toUpperCase() === 'FINAL OUTPUT') {
+                        taskElement.classList.add('highlight-task');
+                    }
+
+                    // 4. Create the inner HTML for the card
+                    taskElement.innerHTML = `
+                        <span class="task-status"></span>
+                        <span class="task-text">${escapeHTML(task.text)}</span>
+                    `;
+
+                    // 5. Add the click event listener to toggle status
+                    taskElement.addEventListener('click', () => handleTaskToggle(taskElement, task));
+
+                    // 6. Append the new element to the correct project column
+                    switch (task.project) {
+                        case 'Dead End':
+                            deadEndList.appendChild(taskElement);
+                            break;
+                        case 'Secret Project':
+                            secretProjectList.appendChild(taskElement);
+                            break;
+                        case 'Others':
+                        default:
+                            othersList.appendChild(taskElement);
+                            break;
+                    }
+                });
+            }
+
+            /**
+             * Handles the click event on a task card.
+             * @param {HTMLElement} taskElement - The DOM element that was clicked
+             * @param {Object} taskObject - The original task data object
+             */
+            async function handleTaskToggle(taskElement, taskObject) {
+                // 1. Optimistic UI Update: Toggle the class immediately
+                taskElement.classList.toggle('completed');
+
+                // 2. Determine the new status
+                const newStatus = taskElement.classList.contains('completed') ? 'completed' : 'pending';
+                
+                // 3. Log the action
+                console.log(`Task ${taskObject.id} clicked. New status: ${newStatus}.`);
+
+                // 4. Send the POST request to the server
+                try {
+                    console.log(`Sending POST request to ${SCRIPT_URL}...`);
+                    
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // You might add an 'Authorization' header here
+                        },
+                        body: JSON.stringify({
+                            taskId: taskObject.id,
+                            status: newStatus
+                        })
+                    });
+
+                    // In a real app, the server might not respond 200 OK
+                    // This 'if' block is a mock of a FAILED request.
+                    if (Math.random() < 0.1) { // 10% chance of failure for demo
+                         throw new Error('Simulated server failure');
+                    }
+                    
+                    if (!response.ok) {
+                        // This would catch real 404, 500, etc. errors
+                        throw new Error(`Server responded with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('Server update successful:', result);
+                    
+                    // Update the local object's status to match
+                    taskObject.status = newStatus;
+
+                } catch (error) {
+                    console.error('Failed to update task:', error);
+                    alert('Error: Could not update task status. Reverting change.');
+                    
+                    // 5. Revert UI on failure
+                    // If the API call fails, toggle the class back
+                    taskElement.classList.toggle('completed');
+                }
+            }
+
+            /**
+             * A simple utility to prevent XSS attacks
+             * @param {string} str - The raw text to escape
+             */
+            function escapeHTML(str) {
+                return str.replace(/[&<>"']/g, function(m) {
+                    return {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    }[m];
+                });
+            }
+
+            // --- Initial Load ---
+            // Start the application by fetching the tasks
+            fetchTasks();
+
+        });
+    </script>
+</body>
+</html>
